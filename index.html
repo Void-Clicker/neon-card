@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="idk.png" type="image/x-icon" />
+<title>Neon Card</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #round-counter {
+    color: #0ff;
+    font-size: 1.8rem;
+    margin: 20px 0 0 0;
+    z-index: 2;
+  }
+
+  .board-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 30px;
+    max-width: 1400px; /* larger max width to make cards bigger */
+    width: 95%;
+    max-height: 80%;
+  }
+
+  .card {
+    width: 100%;
+    aspect-ratio: 2/3; /* rectangular cards */
+    perspective: 1000px;
+    cursor: pointer;
+  }
+
+  .inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    border-radius: 12px;
+  }
+
+  .card.flipped .inner {
+    transform: rotateY(180deg);
+  }
+
+  .front, .back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .back {
+    background: linear-gradient(135deg, #111 25%, #222 50%, #111 75%);
+    border: 2px solid #0ff;
+    box-shadow: 0 0 35px rgba(0,255,255,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+    color: #0ff;
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  .back::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, cyan, transparent);
+    animation: scan 2s linear infinite;
+  }
+
+  @keyframes scan {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  .front {
+    transform: rotateY(180deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    animation: pulse 3s infinite alternate;
+  }
+
+  .front::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid currentColor;
+    box-shadow: 0 0 25px currentColor, 0 0 50px currentColor inset;
+    pointer-events: none;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 25px currentColor, 0 0 50px currentColor inset; }
+    100% { box-shadow: 0 0 40px currentColor, 0 0 70px currentColor inset; }
+  }
+
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.8;
+    animation: float 3s infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translate(0,0) scale(1); opacity: 0.8; }
+    50% { transform: translate(var(--x), var(--y)) scale(1.5); opacity: 1; }
+    100% { transform: translate(0,0) scale(1); opacity: 0.8; }
+  }
+
+  .red { background: #ff0033; color: #ff0033; }
+  .green { background: #00ff77; color: #00ff77; }
+  .blue { background: #00ffff; color: #00ffff; }
+  .yellow { background: #ffff33; color: #ffff33; }
+
+  .button-bar {
+    width: 100%;
+    background: #111;
+    border-top: 2px solid #0ff;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 20px 0;
+    box-shadow: 0 -0 20px rgba(0,255,255,0.3);
+    z-index: 2;
+  }
+
+  .button-bar button {
+    padding: 18px 40px;
+    font-size: 1.4rem;
+    color: #0ff;
+    background: transparent;
+    border: 2px solid #0ff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .button-bar button:hover {
+    box-shadow: 0 0 25px #0ff, 0 0 50px #0ff inset;
+  }
+
+  /* Credits overlay */
+  #credits-screen {
+    position: fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    color: #0ff;
+  }
+
+  .credits-content {
+    display: flex;
+    flex-direction: row;
+    background: #111;
+    border: 2px solid #0ff;
+    border-radius: 15px;
+    padding: 20px;
+    max-width: 800px;
+    width: 90%;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .credits-content img {
+    width: 150px;
+    height: 150px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #0ff;
+    box-shadow: 0 0 20px #0ff;
+  }
+
+  .credits-text {
+    flex: 1;
+  }
+
+  .credits-text h2 {
+    margin: 0 0 10px 0;
+    color: #0ff;
+  }
+
+  .credits-text p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .close-credits {
+    margin-top: 20px;
+    padding: 14px 35px;
+    font-size: 1.2rem;
+    border: 2px solid #0ff;
+    border-radius: 8px;
+    background: transparent;
+    color: #0ff;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: 0.3s;
+  }
+
+  .close-credits:hover {
+    box-shadow: 0 0 20px #0ff, 0 0 40px #0ff inset;
+  }
+
+  @media (max-width: 900px) {
+    .credits-content {
+      flex-direction: column;
+      align-items: center;
+    }
+    .credits-content img {
+      width: 120px;
+      height: 120px;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .board {
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 20px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .board {
+      grid-template-columns: 1fr;
+      grid-gap: 15px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="round-counter">Round: 0</div>
+
+<div class="board-container">
+  <div class="board">
+    <div class="card" data-color="red"><div class="inner"><div class="back">NEON</div><div class="front red"></div></div></div>
+    <div class="card" data-color="green"><div class="inner"><div class="back">NEON</div><div class="front green"></div></div></div>
+    <div class="card" data-color="blue"><div class="inner"><div class="back">NEON</div><div class="front blue"></div></div></div>
+    <div class="card" data-color="yellow"><div class="inner"><div class="back">NEON</div><div class="front yellow"></div></div></div>
+  </div>
+</div>
+
+<div class="button-bar">
+  <button id="start-btn">Start Game</button>
+  <button id="credits-btn">Credits</button>
+</div>
+
+<div id="credits-screen">
+  <div class="credits-content">
+    <img src="quantum.jpg" alt="Creator Photo">
+    <div class="credits-text">
+      <h2>Quantum</h2>
+      <p>Developer</p>
+      <button class="close-credits">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const cards = document.querySelectorAll(".card");
+const roundCounter = document.getElementById("round-counter");
+const startBtn = document.getElementById("start-btn");
+const creditsBtn = document.getElementById("credits-btn");
+const creditsScreen = document.getElementById("credits-screen");
+const closeCreditsBtn = document.querySelector(".close-credits");
+
+let sequence = [];
+let playerSequence = [];
+let round = 0;
+let gameStarted = false;
+
+function flash(card) {
+  const front = card.querySelector(".front");
+  card.classList.add("flipped");
+  front.classList.add("active");
+  setTimeout(() => {
+    card.classList.remove("flipped");
+    front.classList.remove("active");
+  }, 800);
+}
+
+function nextRound() {
+  playerSequence = [];
+  round++;
+  roundCounter.textContent = `Round: ${round}`;
+  const random = cards[Math.floor(Math.random() * cards.length)];
+  sequence.push(random.dataset.color);
+  playSequence();
+}
+
+function playSequence() {
+  let i = 0;
+  const interval = setInterval(() => {
+    const card = document.querySelector(`.card[data-color="${sequence[i]}"]`);
+    flash(card);
+    i++;
+    if (i >= sequence.length) clearInterval(interval);
+  }, 1200);
+}
+
+function checkPlayer(color) {
+  playerSequence.push(color);
+  const index = playerSequence.length - 1;
+  if (playerSequence[index] !== sequence[index]) {
+    alert("Game Over!");
+    resetGame();
+    return;
+  }
+  if (playerSequence.length === sequence.length) {
+    setTimeout(nextRound, 1000);
+  }
+}
+
+function resetGame() {
+  sequence = [];
+  playerSequence = [];
+  round = 0;
+  roundCounter.textContent = `Round: ${round}`;
+  gameStarted = false;
+}
+
+// Add particles to cards
+cards.forEach(card => {
+  const front = card.querySelector(".front");
+  for (let i = 0; i < 15; i++) {
+    const particle = document.createElement("div");
+    particle.classList.add("particle");
+    particle.style.setProperty('--x', `${Math.random() * 20 - 10}px`);
+    particle.style.setProperty('--y', `${Math.random() * 20 - 10}px`);
+    particle.style.top = `${Math.random() * 100}%`;
+    particle.style.left = `${Math.random() * 100}%`;
+    front.appendChild(particle);
+  }
+
+  card.addEventListener("click", () => {
+    if (!gameStarted) return;
+    const color = card.dataset.color;
+    flash(card);
+    checkPlayer(color);
+  });
+});
+
+startBtn.addEventListener("click", () => {
+  if (!gameStarted) {
+    gameStarted = true;
+    nextRound();
+  }
+});
+
+creditsBtn.addEventListener("click", () => {
+  creditsScreen.style.display = "flex";
+});
+
+closeCreditsBtn.addEventListener("click", () => {
+  creditsScreen.style.display = "none";
+});
+</script>
+</body>
+</html>
